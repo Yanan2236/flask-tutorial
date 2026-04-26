@@ -18,3 +18,23 @@ def close_db(e=None):
     
     if db is not None:
         db.close()
+        
+def init_db():
+    db = get_db()
+    # schmema.sql を開いて、SQL を実行する
+    # Django の migrate に相当する処理
+    with current_app.open_resource('schema.sql') as f:
+        db.executescript(f.read().decode('utf8'))
+        
+        
+# init-db という CLI コマンドを定義する
+# DB を初期化し、完了メッセージを表示する
+@click.command('init-db')
+def init_db_command():
+    init_db()
+    click.echo('Initialized the database.')
+
+# Flask アプリに、DB を初期化するための関数とコマンドを登録する
+def init_app(app):
+    app.teardown_appcontext(close_db)
+    app.cli.add_command(init_db_command)
